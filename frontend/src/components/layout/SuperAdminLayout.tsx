@@ -60,10 +60,10 @@ interface SuperAdminLayoutProps {
 }
 
 export function SuperAdminLayout({ children, title }: SuperAdminLayoutProps) {
-  const { loading } = useRequireAuth(['super_admin']);
+  const { loading, isAuthenticated, user } = useRequireAuth(['super_admin']);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  if (loading) {
+  if (loading || !isAuthenticated || user?.role !== 'super_admin') {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Spinner size="lg" className="text-primary" />

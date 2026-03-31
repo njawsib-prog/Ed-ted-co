@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { authMiddleware } from '../middleware/authMiddleware';
 import { requireRole } from '../middleware/roleMiddleware';
 import { branchMiddleware } from '../middleware/branchMiddleware';
 
@@ -8,7 +9,8 @@ import * as batchController from '../controllers/branch-admin/batch.controller';
 
 const router = Router();
 
-// All routes require admin role and branch access
+// All routes require authentication, admin role, and branch access
+router.use(authMiddleware);
 router.use(requireRole('branch_admin', 'super_admin'));
 router.use(branchMiddleware);
 

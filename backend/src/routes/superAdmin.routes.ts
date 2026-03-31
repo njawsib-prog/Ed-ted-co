@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { requireRole } from '../middleware/roleMiddleware';
-import { auditLogger } from '../middleware/auditLogger';
 import dashboardController from '../controllers/super-admin/dashboard.controller';
 import branchController from '../controllers/super-admin/branch.controller';
 import paymentController from '../controllers/super-admin/payment.controller';
@@ -13,7 +12,6 @@ const router = Router();
 // All routes require super_admin role
 router.use(authMiddleware);
 router.use(requireRole('super_admin'));
-router.use(auditLogger);
 
 // ============================================
 // Dashboard Routes

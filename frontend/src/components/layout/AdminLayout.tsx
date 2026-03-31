@@ -141,7 +141,7 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
-  const { loading } = useRequireAuth(['branch_admin']);
+  const { loading, isAuthenticated, user } = useRequireAuth(['branch_admin']);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const config = useInstitute();
 
@@ -150,7 +150,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
     (item) => !item.featureFlag || config.features[item.featureFlag as keyof typeof config.features]
   );
 
-  if (loading) {
+  if (loading || !isAuthenticated || user?.role !== 'branch_admin') {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Spinner size="lg" className="text-primary" />
