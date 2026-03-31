@@ -10,9 +10,16 @@ const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true' || process.env.NODE_E
 const COOKIE_SAME_SITE: 'strict' | 'lax' | 'none' = (process.env.COOKIE_SAME_SITE as 'strict' | 'lax' | 'none') || (process.env.NODE_ENV === 'production' ? 'none' : 'strict');
 
 interface LoginRequest {
+  branch_id: string;
   email: string;
   password: string;
   totp_code?: string;
+}
+
+interface AdminRecord {
+  id: string;
+  name: string;
+  branch_id: string;
 }
 
 /**
@@ -125,14 +132,32 @@ export const superAdminLogin = async (req: Request, res: Response): Promise<void
  */
 export const branchAdminLogin = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password, totp_code } = req.body as LoginRequest;
+    console.log('[branchAdminLogin] req.body keys:', req.body ? Object.keys(req.body) : 'null');
 
-    if (!email || !password) {
-      res.status(400).json({ error: 'Email and password are required' });
+    // Guard: ensure req.body exists and is an object
+    if (!req.body || typeof req.body !== 'object') {
+      res.status(400).json({ success: false, error: 'Request body is missing or malformed' });
       return;
     }
 
-    // Find user with branch info
+    const { branch_id, email, password, totp_code } = req.body as LoginRequest;
+
+    if (!branch_id) {
+      res.status(400).json({ success: false, error: 'branch_id is required' });
+      return;
+    }
+
+    if (!email) {
+      res.status(400).json({ success: false, error: 'email is required' });
+      return;
+    }
+
+    if (!password) {
+      res.status(400).json({ success: false, error: 'password is required' });
+      return;
+    }
+
+    // Find user with branch info — Supabase may return admins as array OR single object
     const { data: user, error } = await supabaseAdmin
       .from('users')
       .select(`
@@ -144,28 +169,30 @@ export const branchAdminLogin = async (req: Request, res: Response): Promise<voi
       .single();
 
     if (error || !user) {
-      res.status(401).json({ error: 'Invalid credentials' });
+      console.error('[branchAdminLogin] User lookup error:', error);
+      res.status(401).json({ success: false, error: 'Invalid credentials' });
       return;
     }
 
     if (!user.is_active) {
-      res.status(403).json({ error: 'Account is deactivated' });
+      res.status(403).json({ success: false, error: 'Account is deactivated' });
       return;
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
     if (!isValidPassword) {
-      res.status(401).json({ error: 'Invalid credentials' });
+      res.status(401).json({ success: false, error: 'Invalid credentials' });
       return;
     }
 
     // Check 2FA
     if (user.totp_enabled) {
       if (!totp_code) {
-        res.status(200).json({ 
-          message: '2FA required', 
+        res.status(200).json({
+          success: false,
+          message: '2FA required',
           requires2FA: true,
-          email: user.email 
+          email: user.email,
         });
         return;
       }
@@ -178,18 +205,38 @@ export const branchAdminLogin = async (req: Request, res: Response): Promise<voi
       });
 
       if (!isValidTotp) {
-        res.status(401).json({ error: 'Invalid 2FA code' });
+        res.status(401).json({ success: false, error: 'Invalid 2FA code' });
         return;
       }
     }
 
-    // Ensure admin record exists
-    if (!user.admins || user.admins.length === 0) {
-      res.status(500).json({ error: 'Admin profile not found for this account. This indicates a data integrity issue — please contact support.' });
+    // Normalise admins: Supabase may return a single object or an array depending on the
+    // relationship cardinality detected by PostgREST. Handle both shapes defensively.
+    const adminsArray: AdminRecord[] = Array.isArray(user.admins)
+      ? user.admins
+      : user.admins
+        ? [user.admins]
+        : [];
+
+    if (adminsArray.length === 0) {
+      console.error('[branchAdminLogin] No admin record found for user:', user.id);
+      res.status(500).json({
+        success: false,
+        error: 'Admin profile not found for this account. Please contact support.',
+      });
       return;
     }
 
-    const adminRecord = user.admins[0];
+    const adminRecord = adminsArray[0];
+
+    if (!adminRecord.branch_id) {
+      console.error('[branchAdminLogin] adminRecord.branch_id is missing for user:', user.id);
+      res.status(500).json({
+        success: false,
+        error: 'Branch information missing for this admin account. Please contact support.',
+      });
+      return;
+    }
 
     // Generate JWT with branch_id
     const token = jwt.sign(
@@ -203,11 +250,14 @@ export const branchAdminLogin = async (req: Request, res: Response): Promise<voi
       { expiresIn: JWT_EXPIRES_IN }
     );
 
-    // Update last login
-    await supabaseAdmin
+    // Update last login (non-blocking)
+    supabaseAdmin
       .from('users')
       .update({ last_login: new Date().toISOString() })
-      .eq('id', user.id);
+      .eq('id', user.id)
+      .then(({ error: updateError }) => {
+        if (updateError) console.error('[branchAdminLogin] Failed to update last_login:', updateError);
+      });
 
     res.cookie('token', token, {
       httpOnly: true,
@@ -218,7 +268,7 @@ export const branchAdminLogin = async (req: Request, res: Response): Promise<voi
     });
 
     res.json({
-      message: 'Login successful',
+      success: true,
       user: {
         id: user.id,
         email: user.email,
@@ -228,8 +278,8 @@ export const branchAdminLogin = async (req: Request, res: Response): Promise<voi
       },
     });
   } catch (error) {
-    console.error('Branch admin login error:', error);
-    res.status(500).json({ error: 'Login failed' });
+    console.error('[branchAdminLogin] Unexpected error:', error);
+    res.status(500).json({ success: false, error: 'Login failed. Please try again.' });
   }
 };
 
