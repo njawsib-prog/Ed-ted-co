@@ -10,7 +10,7 @@ const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true' || process.env.NODE_E
 const COOKIE_SAME_SITE: 'strict' | 'lax' | 'none' = (process.env.COOKIE_SAME_SITE as 'strict' | 'lax' | 'none') || (process.env.NODE_ENV === 'production' ? 'none' : 'strict');
 
 interface LoginRequest {
-  branch_id: string;
+  branch_id?: string;
   email: string;
   password: string;
   totp_code?: string;
@@ -140,12 +140,7 @@ export const branchAdminLogin = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    const { branch_id, email, password, totp_code } = req.body as LoginRequest;
-
-    if (!branch_id) {
-      res.status(400).json({ success: false, error: 'branch_id is required' });
-      return;
-    }
+    const { email, password, totp_code } = req.body as LoginRequest;
 
     if (!email) {
       res.status(400).json({ success: false, error: 'email is required' });
