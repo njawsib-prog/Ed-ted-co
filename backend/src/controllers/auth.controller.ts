@@ -183,13 +183,21 @@ export const branchAdminLogin = async (req: Request, res: Response): Promise<voi
       }
     }
 
+    // Ensure admin record exists
+    if (!user.admins || user.admins.length === 0) {
+      res.status(500).json({ error: 'Admin profile not found for this account. This indicates a data integrity issue — please contact support.' });
+      return;
+    }
+
+    const adminRecord = user.admins[0];
+
     // Generate JWT with branch_id
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email,
         role: user.role,
-        branch_id: user.admins[0].branch_id,
+        branch_id: adminRecord.branch_id,
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
@@ -215,8 +223,8 @@ export const branchAdminLogin = async (req: Request, res: Response): Promise<voi
         id: user.id,
         email: user.email,
         role: user.role,
-        branch_id: user.admins[0].branch_id,
-        name: user.admins[0].name,
+        branch_id: adminRecord.branch_id,
+        name: adminRecord.name,
       },
     });
   } catch (error) {
