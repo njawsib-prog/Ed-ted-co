@@ -27,10 +27,10 @@ COPY --from=builder /app/package.json ./
 
 # Set environment
 ENV NODE_ENV=production
-ENV PORT=3001
 
-# Expose port
-EXPOSE 3001
+# Expose port for API server
+EXPOSE 4000
 
 # Start the application
+# Railway will override this command for workers with: node dist/workers/index.js
 CMD ["node", "dist/index.js"]

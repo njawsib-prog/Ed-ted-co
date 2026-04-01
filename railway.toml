@@ -10,10 +10,23 @@ builder = "dockerfile"
 
 [services.variables]
 NODE_ENV = "production"
-PORT = "3001"
+PORT = "4000"
 
 [[services.domains]]
 domain = "${RAILWAY_STATIC_URL}"
+
+[[services.health_checks]]
+path = "/api/health"
+timeout_seconds = 10
+interval_seconds = 30
+failure_threshold = 3
+
+[services.env_vars]
+DATABASE_URL = "${{DATABASE_URL}}"
+SUPABASE_URL = "${{SUPABASE_URL}}"
+SUPABASE_SERVICE_KEY = "${{SUPABASE_SERVICE_KEY}}"
+REDIS_URL = "${{edtech-redis.REDIS_URL}}"
+JWT_SECRET = "${{JWT_SECRET}}"
 
 # Frontend Service
 [[services]]
@@ -22,16 +35,37 @@ source = "frontend"
 
 [services.build]
 builder = "dockerfile"
-build_args = [
-  { name = "NEXT_PUBLIC_API_URL", value = "https://${{edtech-backend.RAILWAY_STATIC_URL}}" },
-  { name = "NEXT_PUBLIC_SUPABASE_URL", value = "${{SUPABASE_URL}}" },
-  { name = "NEXT_PUBLIC_SUPABASE_ANON_KEY", value = "${{SUPABASE_ANON_KEY}}" }
-]
 
 [services.variables]
 NODE_ENV = "production"
 PORT = "3000"
 NEXT_PUBLIC_API_URL = "https://${{edtech-backend.RAILWAY_STATIC_URL}}"
+NEXT_PUBLIC_SUPABASE_URL = "${{SUPABASE_URL}}"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "${{SUPABASE_ANON_KEY}}"
+NEXT_PUBLIC_INSTITUTE_NAME = "${{INSTITUTE_NAME}}"
+NEXT_PUBLIC_INSTITUTE_TAGLINE = "${{INSTITUTE_TAGLINE}}"
+
+[[services.domains]]
+domain = "${RAILWAY_STATIC_URL}"
+
+# Worker Service
+[[services]]
+name = "edtech-worker"
+source = "backend"
+
+[services.build]
+builder = "dockerfile"
+
+[services.command]
+command = "node dist/workers/index.js"
+
+[services.variables]
+NODE_ENV = "production"
+DATABASE_URL = "${{DATABASE_URL}}"
+SUPABASE_URL = "${{SUPABASE_URL}}"
+SUPABASE_SERVICE_KEY = "${{SUPABASE_SERVICE_KEY}}"
+REDIS_URL = "${{edtech-redis.REDIS_URL}}"
+JWT_SECRET = "${{JWT_SECRET}}"
 
 # Redis Service (managed)
 [[services]]
