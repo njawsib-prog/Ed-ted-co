@@ -86,7 +86,7 @@ export default function AdminStudentsPage() {
   const fetchBatches = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/batches', {
+      const response = await fetch('/api/branch-admin/batches', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -184,7 +184,7 @@ export default function AdminStudentsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -524,6 +524,6 @@ export default function AdminStudentsPage() {
           )}
         </div>
       </main>
-    </div>
+    </>
   );
 }

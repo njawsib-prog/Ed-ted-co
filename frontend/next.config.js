@@ -12,6 +12,16 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    // Strip a trailing /api from NEXT_PUBLIC_API_URL to avoid duplicate /api/api paths
+    const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/api\/?$/, '');
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${apiBase}/api/:path*`,
+      },
+    ];
+  },
   async headers() {
     return [
       {
