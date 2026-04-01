@@ -67,7 +67,7 @@ export default function AdminAttendancePage() {
   const fetchBatches = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/batches', {
+      const response = await fetch('/api/branch-admin/batches', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -152,7 +152,7 @@ export default function AdminAttendancePage() {
   const handleMarkAttendance = async (studentId: string, status: 'present' | 'absent' | 'late' | 'excused') => {
     try {
       const token = localStorage.getItem('token');
-      await fetch('/api/admin/attendance/mark', {
+      await fetch('/api/admin/attendance/manual', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -174,7 +174,7 @@ export default function AdminAttendancePage() {
   const handleBulkMark = async (status: 'present' | 'absent') => {
     try {
       const token = localStorage.getItem('token');
-      await fetch('/api/admin/attendance/bulk-mark', {
+      await fetch('/api/admin/attendance/bulk-update', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -247,7 +247,7 @@ export default function AdminAttendancePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -645,6 +645,6 @@ export default function AdminAttendancePage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

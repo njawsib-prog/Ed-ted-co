@@ -184,7 +184,7 @@ function AdminResultsContent() {
   const handleReevaluate = async (resultId: string) => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`/api/admin/results/${resultId}/re-evaluate`, {
+      await fetch(`/api/admin/results/${resultId}/reevaluate`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -234,7 +234,7 @@ function AdminResultsContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -603,13 +603,13 @@ function AdminResultsContent() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
 export default function AdminResultsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center py-24"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>}>
       <AdminResultsContent />
     </Suspense>
   );

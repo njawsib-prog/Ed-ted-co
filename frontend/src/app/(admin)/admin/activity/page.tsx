@@ -118,7 +118,7 @@ export default function AdminActivityPage() {
   const entityTypes = [...new Set(logs.map((l) => l.entityType))];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -289,6 +289,6 @@ export default function AdminActivityPage() {
           </>
         )}
       </main>
-    </div>
+    </>
   );
 }

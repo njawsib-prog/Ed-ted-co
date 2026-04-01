@@ -170,7 +170,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
           onMenuClick={() => setSidebarOpen(true)}
           title={title}
         />
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 overflow-auto">
           {children}
         </main>
       </div>
