@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { authMiddleware } from '../middleware/authMiddleware';
 import { requireRole } from '../middleware/roleMiddleware';
 import { branchMiddleware } from '../middleware/branchMiddleware';
 
@@ -16,7 +17,8 @@ import * as auditLogController from '../controllers/admin/auditLog.controller';
 
 const router = Router();
 
-// All routes require admin or super_admin role and branch access
+// All routes require authentication, admin or super_admin role, and branch access
+router.use(authMiddleware);
 router.use(requireRole('branch_admin', 'super_admin'));
 router.use(branchMiddleware);
 
