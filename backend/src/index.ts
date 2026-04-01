@@ -84,7 +84,7 @@ app.use((req, res) => {
 // Global error handler
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Error:', err.message);
-  
+
   // Handle CORS errors
   if (err.message === 'Not allowed by CORS') {
     res.status(403).json({ error: 'CORS policy violation' });
@@ -98,9 +98,39 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   }
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
 });
+
+// Graceful shutdown
+const gracefulShutdown = async (signal: string) => {
+  console.log(`\n${signal} received. Starting graceful shutdown...`);
+
+  server.close(async () => {
+    console.log('✅ HTTP server closed');
+
+    // Close Redis connections if they exist
+    try {
+      const { redisClient, bullmqConnection } = await import('./utils/redisClient');
+      await redisClient.quit();
+      await bullmqConnection.quit();
+      console.log('✅ Redis connections closed');
+    } catch (error) {
+      console.error('Error closing Redis:', error);
+    }
+
+    process.exit(0);
+  });
+
+  // Force shutdown after 10 seconds
+  setTimeout(() => {
+    console.error('❌ Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 export default app;
